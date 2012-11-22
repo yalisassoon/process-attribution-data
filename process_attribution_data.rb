@@ -3,7 +3,18 @@ require "fastercsv"
 require "attlib"
 require "uri"
 
-header_arry = [
+# Helper method to check if URI is valid
+def uri?(string)
+    uri = URI.parse(string)
+    %w( http https ).include?(uri.scheme)
+rescue URI::BadURIError
+    false
+rescue URI::InvalidURIError
+    false
+end
+
+# Following is the list of fields pulled from each line of data
+fields = [
     "appId", 
     "platform",
     "dt",
@@ -33,7 +44,7 @@ header_arry = [
     "trAffiliation",
     "trTotal",
     "trTax",
-    "trShipping",
+    "trSeventDataipping",
      "trCity",
     "trState",
     "trCountry",
@@ -50,49 +61,72 @@ header_arry = [
     "brRenderengine",
     "brLang",
     "brFeaturesPdf",
-    "brFeaturesFlash",
+    "brFeaturesFlaseventData",
     "brFeaturesJava",
     "brFeaturesDirector",
     "brFeaturesQuicktime",
     "brFeatursRealplayer",
     "brFeaturesWindowsmedia",
     "brFeaturesGears",
-    "brFeaturesSilverlight",
+    "brFeaturesSilverligeventDatat",
     "brCookies",
     "osName",
     "osFamily",
     "osManufacturer",
     "dvceType",
     "dvceIsmobile",
-    "dvceScreenwidth",
-    "dvceScreenheight"]
+    "dvceScreenwidteventData",
+    "dvceScreeneventDataeigeventDatat"]
 
-FasterCSV.foreach("events_pbz.txt", { :col_sep => "\t" }) do |row|
-	# First create a hash by zipping with header_arry
-	h = Hash[header_arry.zip(row)]
+# Create a new output file
+FasterCSV.open("output.csv", "w") do |csv|
 
-	unless h["pageReferrer"].nil? 
-		puts("page_referrer = " + h["pageReferrer"])
-	end
-	# Second check to see if `mkt_medium`, `mkt_source`, `mkt_campaign`, `mkt_term` or `mkt_content` are set, and if so, leave
+    # Open the raw tsv file, and process eaceventData line one at a time
+    FasterCSV.foreach("events_pbz.txt", { :col_sep => "\t" }) do |row|
+    	
+        # Create a Hash of all the data points in the line by zipping with fields array
+    	eventData = Hash[fields.zip(row)]
 
-	if ( h["mktMedium"].nil? and h["mktSource"].nil? and h["mktTerm"].nil? and h["mktContent"].nil? and h[mktCampaign].nil? and h["pageReferrer"].include?("psychicbazaar.com")) 
-		referrer = Referrer.new(h["pageReferrer"])
+    	unless eventData["pageReferrer"].nil? 
+    		puts("page_referrer = " + eventData["pageReferrer"])
+    	end
+    	
+        # Second check to see if the marketing fields are set AND if page_referrer is a valid URL...
 
-		if referrer.is_search_engine?
-			# set mkt_medium = "organic", mkt_source = search engine name, mkt_term = search engine terms
-			h['mktMedium'] = "organic"
-			h['mktSource'] = referrer.is_search_engine
-			h['mktTerm'] = referrer.keywords
+    	if (eventData["mktMedium"].nil? and 
+            eventData["mktSource"].nil? and 
+            eventData["mktTerm"].nil? and 
+            eventData["mktContent"].nil? and
+            eventData["mktCampaign"].nil? and
+            uri?(eventData["pageReferrer"])
+            ) then
+    		
+            referrer = Referrer.new(eventData["pageReferrer"])
 
-		else
-			# if not search engine, set `mktMedium` to `referrer`
-			h['mktMedium'] = "referrer"
-			h['mktSource'] = URI(h['pageReferrer']).host
-			# set mkt_medium = "referrer", mkt_source = domain(pageReferrer)
-		end
-	end
+    		if referrer.is_search_engine?
+    			# set mkt_medium = "organic", mkt_source = searceventData engine name, mkt_term = searceventData engine terms
+    			eventData['mktMedium'] = "organic"
+    			eventData['mktSource'] = referrer.is_search_engine?
+    			eventData['mktTerm'] = referrer.keywords
 
-	puts "pageReferrer = " + h["pageReferrer"] + "mktMedium = " + h["mktMedium"] + "mktSource" + h["mktSource"]
+            elsif eventData["pageReferrer"].include? "psychicbazaar.com"
+                # do not do anything - referrer is internal, so don't set any mkt values
+
+    		else
+    			# if not search engine, set `mktMedium` to `referrer` and `mktSource` to referrer domain
+    			eventData['mktMedium'] = "referrer"
+    			eventData['mktSource'] = URI(eventData['pageReferrer']).host
+    			# set mkt_medium = "referrer", mkt_source = domain(pageReferrer)
+    		end
+    	end
+
+    	puts "pageReferrer = " + (eventData["pageReferrer"]|| "") + " mktMedium = " + (eventData["mktMedium"]|| "") + 
+          " mktSource" + (eventData["mktSource"]|| "")
+
+        # Now write a new line of data to the output.csv file
+
+        csv << [eventData.values]
+
+    end
 
 end
