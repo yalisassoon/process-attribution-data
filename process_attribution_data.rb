@@ -44,7 +44,7 @@ fields = [
     "trAffiliation",
     "trTotal",
     "trTax",
-    "trSeventDataipping",
+    "trShipping",
      "trCity",
     "trState",
     "trCountry",
@@ -61,27 +61,27 @@ fields = [
     "brRenderengine",
     "brLang",
     "brFeaturesPdf",
-    "brFeaturesFlaseventData",
+    "brFeaturesFlash",
     "brFeaturesJava",
     "brFeaturesDirector",
     "brFeaturesQuicktime",
     "brFeatursRealplayer",
     "brFeaturesWindowsmedia",
     "brFeaturesGears",
-    "brFeaturesSilverligeventDatat",
+    "brFeaturesSilverlight",
     "brCookies",
     "osName",
     "osFamily",
     "osManufacturer",
     "dvceType",
     "dvceIsmobile",
-    "dvceScreenwidteventData",
-    "dvceScreeneventDataeigeventDatat"]
+    "dvceScreenwidth",
+    "dvceScreenHeight"]
 
 # Create a new output file
-FasterCSV.open("output.csv", "w") do |csv|
+FasterCSV.open("output.csv", "w", { :col_sep => "\t" }) do |csv|
 
-    # Open the raw tsv file, and process eaceventData line one at a time
+    # Open the raw tsv file, and process each line one at a time
     FasterCSV.foreach("events_pbz.txt", { :col_sep => "\t" }) do |row|
     	
         # Create a Hash of all the data points in the line by zipping with fields array
@@ -123,9 +123,9 @@ FasterCSV.open("output.csv", "w") do |csv|
     	puts "pageReferrer = " + (eventData["pageReferrer"]|| "") + " mktMedium = " + (eventData["mktMedium"]|| "") + 
           " mktSource" + (eventData["mktSource"]|| "")
 
-        # Now write a new line of data to the output.csv file
-
-        csv << [eventData.values]
+        # Now write a new line of data to the output.csv file. 
+        # Note - we use the original field array to maintain order of fields in output
+        csv << fields.map { |f|  eventData[f]  } 
 
     end
 
