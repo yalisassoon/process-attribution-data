@@ -19,13 +19,15 @@ fields = [
     "platform",
     "dt",
     "tm",
-    "eventName",
+    "event",
+    "eventId",
     "txnId",
     "vTracker",
     "vCollector",
     "vEtl",
     "userId",
     "userIpaddress",
+    "userFingerprint",
     "visitId",
     "pageUrl",
     "pageTitle",
@@ -45,7 +47,7 @@ fields = [
     "trTotal",
     "trTax",
     "trShipping",
-     "trCity",
+    "trCity",
     "trState",
     "trCountry",
     "tiOrderid",
@@ -54,6 +56,7 @@ fields = [
     "tiCategory",
     "tiPrice",
     "tiQuantity",
+    "useragent",
     "brName",
     "brFamily",
     "brVersion",
@@ -70,9 +73,11 @@ fields = [
     "brFeaturesGears",
     "brFeaturesSilverlight",
     "brCookies",
+    "brColordepth",
     "osName",
     "osFamily",
     "osManufacturer",
+    "osName",
     "dvceType",
     "dvceIsmobile",
     "dvceScreenwidth",
@@ -82,7 +87,7 @@ fields = [
 FasterCSV.open("output.csv", "w", { :col_sep => "\t" }) do |csv|
 
     # Open the raw tsv file, and process each line one at a time
-    FasterCSV.foreach("events_pbz.txt", { :col_sep => "\t" }) do |row|
+    FasterCSV.foreach("events_arv.txt", { :col_sep => "\t" }) do |row|
     	
         # Create a Hash of all the data points in the line by zipping with fields array
     	eventData = Hash[fields.zip(row)]
@@ -109,7 +114,7 @@ FasterCSV.open("output.csv", "w", { :col_sep => "\t" }) do |csv|
     			eventData['mktSource'] = referrer.is_search_engine?
     			eventData['mktTerm'] = referrer.keywords
 
-            elsif eventData["pageReferrer"].include? "psychicbazaar.com"
+            elsif eventData["pageReferrer"].include? "web-analyse.no"
                 # do not do anything - referrer is internal, so don't set any mkt values
 
     		else
